@@ -61,8 +61,6 @@ void TwoWire::begin(void)
   txBufferLength = 0;
 
   twi_init();
-  twi_attachSlaveTxEvent(onRequestService); // default callback must exist
-  twi_attachSlaveRxEvent(onReceiveService); // default callback must exist
 }
 
 void TwoWire::begin(uint8_t address)
@@ -167,10 +165,10 @@ void TwoWire::beginTransmission(int address)
 //	no call to endTransmission(true) is made. Some I2C
 //	devices will behave oddly if they do not see a STOP.
 //
-uint8_t TwoWire::endTransmission(uint8_t sendStop)
+uint8_t TwoWire::endTransmission(bool sendStop)
 {
   // transmit buffer (blocking)
-  uint8_t ret = twi_writeTo(txAddress, txBuffer, txBufferLength, 1, sendStop);
+  uint8_t ret = twi_writeTo(txAddress, txBuffer, txBufferLength, sendStop);
   // reset tx buffer iterator vars
   txBufferIndex = 0;
   txBufferLength = 0;
@@ -204,10 +202,6 @@ size_t TwoWire::write(uint8_t data)
     ++txBufferIndex;
     // update amount in buffer   
     txBufferLength = txBufferIndex;
-  }else{
-  // in slave send mode
-    // reply to master
-    twi_transmit(&data, 1);
   }
   return 1;
 }
@@ -222,10 +216,6 @@ size_t TwoWire::write(const uint8_t *data, size_t quantity)
     for(size_t i = 0; i < quantity; ++i){
       write(data[i]);
     }
-  }else{
-  // in slave send mode
-    // reply to master
-    twi_transmit(data, quantity);
   }
   return quantity;
 }
